@@ -1,0 +1,38 @@
+name: QPI real-hardware safety gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'qpi_real_hardware/safe_gate.py'
+      - '.github/workflows/qpi-real-hardware-safe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: qpi_real_hardware/requirements.txt
+      - name: Install dependencies
+        run: pip install -r qpi_real_hardware/requirements.txt
+      - name: Run QPI-0F safety gate
+        run: python qpi_real_hardware/safe_gate.py
+      - name: Show results
+        if: always()
+        run: |
+          if [ -f qpi_real_hardware/results_safe/RESULTS.md ]; then cat qpi_real_hardware/results_safe/RESULTS.md; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qpi-0f-real-hardware-safety-results
+          path: qpi_real_hardware/results_safe
+          if-no-files-found: warn
