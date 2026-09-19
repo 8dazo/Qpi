@@ -1,0 +1,47 @@
+name: QPI cross-stack benchmark
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'qpi_cross_stack/**'
+      - '.github/workflows/qpi-cross-stack.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: qpi_cross_stack/requirements.txt
+      - name: Install dependencies
+        run: pip install -r qpi_cross_stack/requirements.txt
+      - name: Print versions
+        run: |
+          python - <<'PY'
+          import qutip, qiskit_dynamics, numpy, scipy
+          print('qutip', qutip.__version__)
+          print('qiskit-dynamics', qiskit_dynamics.__version__)
+          print('numpy', numpy.__version__)
+          print('scipy', scipy.__version__)
+          PY
+      - name: Run QPI-0C
+        run: python qpi_cross_stack/benchmark.py --out qpi_cross_stack/results --n-source 12 --n-target 24
+      - name: Show results
+        if: always()
+        run: |
+          if [ -f qpi_cross_stack/results/RESULTS.md ]; then cat qpi_cross_stack/results/RESULTS.md; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qpi-0c-cross-stack-results
+          path: qpi_cross_stack/results
+          if-no-files-found: warn
