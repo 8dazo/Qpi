@@ -1,0 +1,6 @@
+numpy>=2.0,<3
+pandas>=2.2,<3
+pyarrow>=18,<25
+scikit-learn>=1.5,<2
+huggingface_hub>=0.30,<2
+hf_xet>=1.1,<2
