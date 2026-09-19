@@ -1,0 +1,39 @@
+name: QPI-1A graph transfer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'qpi_v1/**'
+      - 'qpi_real_hardware/**'
+      - '.github/workflows/qpi-1a.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: qpi_real_hardware/requirements.txt
+      - name: Install dependencies
+        run: pip install -r qpi_real_hardware/requirements.txt
+      - name: Run QPI-1A
+        run: python -m qpi_v1.benchmark_1a --out qpi_v1/results_1a
+      - name: Show results
+        if: always()
+        run: |
+          if [ -f qpi_v1/results_1a/RESULTS.md ]; then cat qpi_v1/results_1a/RESULTS.md; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qpi-1a-graph-transfer-results
+          path: qpi_v1/results_1a
+          if-no-files-found: warn
